@@ -14,7 +14,8 @@ body {
   color: var(--text-color);
   margin: 0;
   padding: 20px;
-  font-size: 13px;
+  /* 基础字体大小从 13px 放大到 16px */
+  font-size: 16px;
   overflow-x: hidden;
 }
 
@@ -47,6 +48,7 @@ h1 {
   color: var(--accent-color);
   text-transform: uppercase;
   letter-spacing: 2px;
+  /* 保持 2em，现在基数变大，H1 也会变大 */
   font-size: 2em;
   margin: 0;
 }
@@ -56,7 +58,8 @@ h1 {
   border-left: 4px solid var(--accent-color);
   padding: 15px;
   margin-top: 15px;
-  font-size: 0.9em;
+  /* 从 0.9em 调整为 0.95em，稍微增加一点相对大小 */
+  font-size: 0.95em;
 }
 
 .grid {
@@ -77,7 +80,8 @@ h1 {
   color: var(--highlight-color);
   border-bottom: 1px dashed var(--dim-color);
   padding-bottom: 10px;
-  font-size: 1.1em;
+  /* 从 1.1em 调整为 1.2em，略微增加 */
+  font-size: 1.2em;
   display: flex;
   justify-content: space-between;
 }
@@ -127,7 +131,8 @@ footer {
   margin-top: 50px;
   text-align: center;
   color: #555;
-  font-size: 0.8em;
+  /* 从 0.8em 调整为 0.85em */
+  font-size: 0.85em;
 }
 
 button.demo-btn {
@@ -140,4 +145,42 @@ button.demo-btn {
 }
 button.demo-btn:hover {
   background: var(--accent-color);
+}
+
+.meaning-section {
+  grid-column: 1 / -1;
+  background-color: #e6f4ff; 
+  border: 1px solid #91caff; 
+}
+
+.meaning-section h2 {
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5em;
+  margin-bottom: 1em;
+}
+
+.meaning-section h3 {
+  color: #555;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.meaning-section p,
+.meaning-section ul {
+  line-height: 1.7;
+  color: #444;
+}
+
+.meaning-section ul {
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.meaning-section li {
+  margin-bottom: 0.5em;
+}
+
+.meaning-section strong {
+  color: #000;
 }
