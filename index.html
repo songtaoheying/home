@@ -14,28 +14,19 @@
       s.parentNode.insertBefore(hm, s);
     })();
 
-    // 页面加载完毕后执行
     window.onload = function () {
-      // 触发一次页面浏览统计（可选，因为百度统计代码通常会自动统计）
-      // 如果这个跳转页是独立入口，手动触发一下更保险
       _hmt.push(['_trackPageview']); 
-
-      console.log("页面加载完成，百度统计已触发，准备延迟跳转...");
-
-      // 延迟 500 毫秒后执行跳转
-      // 这个时间通常足够让异步请求发出
+      console.log("页面加载完成，准备延迟跳转...");
       setTimeout(function () {
         console.log("延迟结束，开始跳转到 1.html...");
-        // 使用 replace 可以让用户无法通过“后退”按钮返回这个跳转页
         window.location.replace("1.html");
-      }, 500); // 500毫秒是比较稳妥的值
+      }, 500);
     };
   </script>
 
   <body>
     <p>正在跳转，请稍候...</p>
     <noscript>
-      <!-- 如果用户的浏览器禁用了JS，这个链接会显示出来 -->
       <p>
         您的浏览器未启用JavaScript，请点击<a href="1.html">这里</a>手动跳转。
       </p>
