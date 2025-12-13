@@ -3,31 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>主页</title>
-    <style>
-      body {
-        font-family: 'Georgia', 'Songti SC', serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #fafafa;
-        color: #555;
-      }
-      .quote {
-        max-width: 600px;
-        padding: 2rem;
-        text-align: center;
-        font-size: 1.25rem;
-        line-height: 1.8;
-        border-left: 3px solid #ddd;
-      }
-    </style>
+    <title>正在跳转...</title>
+    <script>
+      var _hmt = _hmt || [];
+      (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?cb7b7a45704663de5af620831782019d";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+      })();
+
+      // 页面加载完毕后立即执行跳转
+      window.onload = function () {
+        window.location.replace("1.html");
+      };
+    </script>
   </head>
   <body>
-    <div class="quote">
-      <p>“我们终此一生，就是要摆脱他人的期待，找到真正的自己。”</p>
-    </div>
+    <p>正在跳转，请稍候...</p>
+    <noscript>
+      <!-- 如果用户的浏览器禁用了JS，这个链接会显示出来 -->
+      <p>
+        您的浏览器未启用JavaScript，请点击<a href="1.html">这里</a>手动跳转。
+      </p>
+    </noscript>
   </body>
 </html>
