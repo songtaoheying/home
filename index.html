@@ -13,10 +13,17 @@
         s.parentNode.insertBefore(hm, s);
       })();
 
-      // 页面加载完毕后立即执行跳转
-      // window.onload = function () {
-      //   window.location.replace("1.html");
-      // };
+      // 页面加载完毕后，手动触发统计并设置回调
+      window.onload = function () {
+        // _hmt.push 是百度统计的通用命令接口
+        // ['_trackPageview'] 是发送页面浏览数据
+        // 第二个参数是一个回调函数，会在数据发送成功后执行
+        _hmt.push(['_trackPageview', window.location.pathname, function() {
+          console.log("百度统计数据已发送，开始跳转...");
+          // 在这个回调里执行跳转，确保万无一失
+          window.location.replace("1.html");
+        }]);
+      };
     </script>
   </head>
   <body>
