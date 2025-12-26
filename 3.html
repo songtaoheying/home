@@ -1,181 +1,210 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>极简久坐提醒 - 科学渐变版</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>极简久坐提醒 - 绝对精准版</title>
     <style>
-        body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: #ffffff; overflow: hidden;
-            display: flex; flex-direction: column; justify-content: center;
-        }
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #ffffff;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
 
-        .progress-container {
-            position: relative;
-            width: 100%; height: 100px;
-            background-color: #f0f0f0; 
-            cursor: crosshair;
-        }
+      .progress-container {
+        position: relative;
+        width: 100%;
+        height: 100px;
+        background-color: #f0f0f0;
+        cursor: crosshair;
+      }
 
-        .progress-fill {
-            height: 100%; width: 0%;
-            background: #2ecc71;
-            /* 宽度平滑过渡，颜色由JS实时控制 */
-            transition: width 1s linear;
-        }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: #2ecc71;
+        /* 缩短过渡时间，让反馈更即时 */
+        transition: width 0.3s linear;
+      }
 
-        .marker {
-            position: absolute; top: 0; width: 6px; height: 100%;
-            background-color: #333;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 10; pointer-events: none; display: none;
-        }
+      .marker {
+        position: absolute;
+        top: 0;
+        width: 6px;
+        height: 100%;
+        background-color: #333;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        pointer-events: none;
+        display: none;
+      }
 
-        .info {
-            position: absolute; width: 100%; text-align: center;
-            top: calc(50% + 70px);
-            color: #666;
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            pointer-events: none; user-select: none;
-        }
+      .info {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        top: calc(50% + 70px);
+        color: #666;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        pointer-events: none;
+        user-select: none;
+      }
 
-        @keyframes danger-shake {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
-            100% { transform: translateY(0); }
+      @keyframes danger-shake {
+        0% {
+          transform: translateY(0);
         }
-        
-        .danger-mode {
-            animation: danger-shake 0.1s infinite;
-            background-color: #fff5f5; 
+        50% {
+          transform: translateY(-2px);
         }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      .danger-mode {
+        animation: danger-shake 0.1s infinite;
+        background-color: #fff5f5;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="progress-container" id="track">
+      <div class="progress-fill" id="fill"></div>
+      <div class="marker" id="marker"></div>
+    </div>
 
-<div class="progress-container" id="track">
-    <div class="progress-fill" id="fill"></div>
-    <div class="marker" id="marker"></div>
-</div>
+    <div class="info" id="status">点击进度条设置提醒 (全长120分钟)</div>
 
-<div class="info" id="status">点击进度条设置提醒 (全长120分钟)</div>
+    <audio id="alarm" loop>
+      <source
+        src="https://www.soundjay.com/buttons/beep-01a.mp3"
+        type="audio/mpeg"
+      />
+    </audio>
 
-<audio id="alarm" loop>
-    <source src="https://www.soundjay.com/buttons/beep-01a.mp3" type="audio/mpeg">
-</audio>
+    <script>
+      const track = document.getElementById("track");
+      const fill = document.getElementById("fill");
+      const marker = document.getElementById("marker");
+      const status = document.getElementById("status");
+      const alarm = document.getElementById("alarm");
 
-<script>
-    const track = document.getElementById('track');
-    const fill = document.getElementById('fill');
-    const marker = document.getElementById('marker');
-    const status = document.getElementById('status');
-    const alarm = document.getElementById('alarm');
+      let startTime = 0; // 记录点击开始的绝对时间戳
+      let targetSeconds = 0; // 目标秒数
+      const MAX_MINUTES = 120;
+      let timer = null;
 
-    let totalSeconds = 0;
-    let targetSeconds = 0;
-    const MAX_MINUTES = 120; // 维持 120 分钟不变
-    let timer = null;
+      function getScientificColor(mins) {
+        if (mins <= 45) return "#2ecc71";
+        if (mins <= 60)
+          return interpolateColor("#2ecc71", "#f1c40f", (mins - 45) / 15);
+        if (mins <= 90)
+          return interpolateColor("#f1c40f", "#e67e22", (mins - 60) / 30);
+        return interpolateColor("#e67e22", "#e74c3c", (mins - 90) / 30);
+      }
 
-    // 科学颜色渐变算法
-    function getScientificColor(mins) {
-        if (mins <= 45) {
-            return "#2ecc71"; // 纯绿 (健康)
-        } else if (mins <= 60) {
-            // 45-60min: 绿 -> 黄
-            return interpolateColor("#2ecc71", "#f1c40f", (mins - 45) / 15);
-        } else if (mins <= 90) {
-            // 60-90min: 黄 -> 橙
-            return interpolateColor("#f1c40f", "#e67e22", (mins - 60) / 30);
-        } else {
-            // 90-120min: 橙 -> 红
-            return interpolateColor("#e67e22", "#e74c3c", (mins - 90) / 30);
-        }
-    }
-
-    // 颜色插值辅助函数
-    function interpolateColor(c1, c2, factor) {
-        const hex = (x) => parseInt(x.replace('#', ''), 16);
-        const r1 = (hex(c1) >> 16) & 0xff, g1 = (hex(c1) >> 8) & 0xff, b1 = hex(c1) & 0xff;
-        const r2 = (hex(c2) >> 16) & 0xff, g2 = (hex(c2) >> 8) & 0xff, b2 = hex(c2) & 0xff;
+      function interpolateColor(c1, c2, factor) {
+        const hex = (x) => parseInt(x.replace("#", ""), 16);
+        const r1 = (hex(c1) >> 16) & 0xff,
+          g1 = (hex(c1) >> 8) & 0xff,
+          b1 = hex(c1) & 0xff;
+        const r2 = (hex(c2) >> 16) & 0xff,
+          g2 = (hex(c2) >> 8) & 0xff,
+          b2 = hex(c2) & 0xff;
         const r = Math.round(r1 + factor * (r2 - r1));
         const g = Math.round(g1 + factor * (g2 - g1));
         const b = Math.round(b1 + factor * (b2 - b1));
         return `rgb(${r}, ${g}, ${b})`;
-    }
+      }
 
-    function update() {
-        totalSeconds++;
-        const mins = totalSeconds / 60;
-        const currentProgress = (totalSeconds / (MAX_MINUTES * 60)) * 100;
-        
-        fill.style.width = Math.min(currentProgress, 100) + '%';
-        
-        // 动态计算科学颜色
+      function update() {
+        if (startTime === 0) return;
+
+        // 【关键点】总秒数 = (当前时间 - 开始时间) / 1000
+        const currentTotalSeconds = (Date.now() - startTime) / 1000;
+        const mins = currentTotalSeconds / 60;
+        const currentProgress =
+          (currentTotalSeconds / (MAX_MINUTES * 60)) * 100;
+
+        fill.style.width = Math.min(currentProgress, 100) + "%";
         const currentColor = getScientificColor(mins);
         fill.style.background = currentColor;
 
-        // 状态文字更新
         if (mins < 60) {
-            status.innerText = `状态：良好 (${Math.floor(mins)}min)`;
-            status.style.color = "#666";
+          status.innerText = `状态：良好 (${Math.floor(mins)}min)`;
+          status.style.color = "#666";
         } else if (mins < 90) {
-            status.innerText = `状态：久坐警告 (${Math.floor(mins)}min)`;
-            status.style.color = currentColor;
+          status.innerText = `状态：久坐警告 (${Math.floor(mins)}min)`;
+          status.style.color = currentColor;
         } else {
-            status.innerText = `状态：过度疲劳，请起身活动`;
+          status.innerText = `状态：过度疲劳，请起身活动`;
+          status.style.color = "#e74c3c";
+        }
+
+        // 到达目标时间
+        if (currentTotalSeconds >= targetSeconds && targetSeconds > 0) {
+          if (alarm.paused) {
+            alarm.play().catch(() => {});
+            document.body.classList.add("danger-mode");
+            status.innerText = "立即起立！点击白色区域复位";
             status.style.color = "#e74c3c";
+          }
         }
+      }
 
-        // 触发警报
-        if (totalSeconds >= targetSeconds && targetSeconds > 0) {
-            if (alarm.paused) {
-                alarm.play().catch(() => {});
-                document.body.classList.add('danger-mode');
-                status.innerText = "立即起立！点击白色区域复位";
-                status.style.color = "#e74c3c";
-            }
-        }
-    }
-
-    track.addEventListener('click', (e) => {
-        alarm.play().then(() => { alarm.pause(); alarm.currentTime = 0; });
+      track.addEventListener("click", (e) => {
+        // 解锁音频
+        alarm.play().then(() => {
+          alarm.pause();
+          alarm.currentTime = 0;
+        });
 
         const width = track.clientWidth;
         const rect = track.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const percentage = clickX / width;
-        
+
         targetSeconds = Math.floor(percentage * MAX_MINUTES * 60);
-        
-        marker.style.left = (percentage * 100) + '%';
-        marker.style.display = 'block';
-        
-        reset();
+
+        marker.style.left = percentage * 100 + "%";
+        marker.style.display = "block";
+
+        // 重置为当前时间戳
+        resetState();
+        startTime = Date.now();
+
         if (timer) clearInterval(timer);
-        timer = setInterval(update, 1000);
-        
+        // 缩短检查间隔至 500ms，让 UI 响应更快，但不影响计时精度
+        timer = setInterval(update, 500);
+
         status.innerText = `提醒已设定: ${Math.floor(targetSeconds / 60)} 分钟`;
         status.style.color = "#666";
-    });
+      });
 
-    document.body.addEventListener('click', (e) => {
+      document.body.addEventListener("click", (e) => {
         if (e.target !== track && !alarm.paused) {
-            reset();
-            status.innerText = "已停止提醒，重新点击进度条设置";
-            status.style.color = "#666";
-            if (timer) clearInterval(timer);
+          resetState();
+          status.innerText = "已停止提醒，重新点击进度条设置";
+          status.style.color = "#666";
+          if (timer) clearInterval(timer);
         }
-    });
+      });
 
-    function reset() {
-        totalSeconds = 0;
+      function resetState() {
+        startTime = 0;
         alarm.pause();
         alarm.currentTime = 0;
-        document.body.classList.remove('danger-mode');
-    }
-</script>
-
-</body>
+        document.body.classList.remove("danger-mode");
+      }
+    </script>
+  </body>
 </html>
