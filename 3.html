@@ -296,7 +296,7 @@
 
         // 只有当当前的分钟数与上一次震动时的分钟数不同时，才触发震动
         if (navigator.vibrate && mins !== lastVibratedMin) {
-          navigator.vibrate(5);
+          navigator.vibrate(30);
           lastVibratedMin = mins; // 更新记录
         }
       }
