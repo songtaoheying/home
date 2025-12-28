@@ -301,7 +301,7 @@
         status.style.color = getScientificColor(mins);
 
         if (navigator.vibrate && mins !== lastVibratedMin) {
-          navigator.vibrate(5);
+          navigator.vibrate(50);
           lastVibratedMin = mins;
         }
       }
