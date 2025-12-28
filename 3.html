@@ -274,7 +274,13 @@
       // 在脚本开头定义一个变量记录上次震动的分钟数
       let lastVibratedMin = -1;
 
+      // 修改原有的交互逻辑，确保手动滑动时依然可以重置旧的计时
       function handlePosition(clientX) {
+        // 如果在报警时手动滑动，先关掉报警
+        if (document.body.classList.contains("danger-mode")) {
+          resetState();
+        }
+
         const hintElement = document.getElementById("hint");
         if (hintElement) hintElement.innerText = "";
 
@@ -294,10 +300,9 @@
         status.innerText = `将在坐满 ${mins} 分钟时提醒`;
         status.style.color = getScientificColor(mins);
 
-        // 只有当当前的分钟数与上一次震动时的分钟数不同时，才触发震动
         if (navigator.vibrate && mins !== lastVibratedMin) {
-          navigator.vibrate(30);
-          lastVibratedMin = mins; // 更新记录
+          navigator.vibrate(5);
+          lastVibratedMin = mins;
         }
       }
 
@@ -400,20 +405,18 @@
       window.addEventListener("mouseup", endEvent);
 
       document.body.addEventListener("click", (e) => {
-        if (!document.getElementById("app").contains(e.target)) {
-          resetState();
-          clearInterval(timer);
-          startTime = 0;
-          targetSeconds = 0;
-          countdown.innerText = "00:00";
-          fill.style.width = "0%";
-          marker.style.display = "none";
-
-          // 重置状态文字
-          status.innerText = "滑动时间轴设定提醒";
-          status.style.color = "var(--text-sub)";
-
-          document.getElementById("hint").innerText = "";
+        // 只有当正处于报警模式（danger-mode），且点击的是背景（非 app 容器内部）时触发
+        if (document.body.classList.contains("danger-mode")) {
+          if (!document.getElementById("app").contains(e.target)) {
+            resetState();
+            startTime = Date.now();
+            countdown.innerText = "00:00";
+            fill.style.width = "0%";
+            status.innerText = "已重新开始计时...";
+            document.getElementById("hint").innerText = "";
+            if (timer) clearInterval(timer);
+            timer = setInterval(update, 500);
+          }
         }
       });
 
