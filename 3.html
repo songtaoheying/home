@@ -371,6 +371,10 @@
         alarm.play().catch(() => {});
         document.body.classList.add("danger-mode");
         const hint = document.getElementById("hint");
+        if (navigator.vibrate) {
+          // 触发一组震动：震动500ms，停200ms，再震动500ms
+          navigator.vibrate([500, 200, 500]);
+        }
         hint.innerText = "点击背景空白处重置";
         hint.style.color = "var(--text-sub)";
       }
