@@ -131,12 +131,38 @@
         pointer-events: none;
       }
 
+      /* 在代码第 152 行左右 */
+      @keyframes glow-breathe {
+        0% {
+          filter: brightness(1);
+          box-shadow: 0 0 10px var(--current-glow-color);
+        }
+        100% {
+          filter: brightness(1.2); 
+          box-shadow: 0 0 15px 2px var(--current-glow-color),
+          inset 0 0 8px rgba(255, 255, 255, 0.3); 
+        }
+      }
+
+      /* 优化后的进度条填充样式 */
       .progress-fill {
         height: 100%;
         width: 0%;
-        background: var(--primary);
+        --current-glow-color: rgba(46, 204, 113, 0.6);
+        background-color: var(--primary);
+
+        /* 添加内部高光纹理，让进度条本身看起来有玻璃质感 */
+        background-image: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.3) 0%,
+          transparent 50%,
+          rgba(0, 0, 0, 0.1) 100%
+        );
+
         transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1),
           background 0.5s linear;
+
+        animation: glow-breathe 2s infinite alternate ease-in-out;
       }
 
       .marker {
@@ -377,7 +403,7 @@
           ? currentColor.replace("rgb", "rgba").replace(")", ", 0.5)")
           : `${currentColor}80`;
 
-        fill.style.boxShadow = `0 0 20px ${glowColor}`;
+        fill.style.setProperty("--current-glow-color", glowColor);
 
         //如果正在预览，就不更新 status 文字
         if (isPreviewing) return;
@@ -437,7 +463,7 @@
       const endEvent = () => {
         if (isDragging) {
           isDragging = false;
-          startTiming(); 
+          startTiming();
           // 松手后，预览文字保留 3 秒
           previewTimer = setTimeout(() => {
             isPreviewing = false;
