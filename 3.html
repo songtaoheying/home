@@ -552,22 +552,24 @@
 
       async function requestLandscape() {
         try {
-          // 1. 现代浏览器需要先进入全屏模式才能锁定方向
           const de = document.documentElement;
           if (de.requestFullscreen) {
             await de.requestFullscreen();
-          } else if (de.webkitRequestFullscreen) {
-            await de.webkitRequestFullscreen();
           }
 
-          // 2. 尝试锁定为横屏 (Landscape)
           if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock("landscape");
           }
+
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            // 触发一个微小的位移再还原，强迫浏览器重新计算 flex 居中
+            document.body.style.display = "none";
+            document.body.offsetHeight; // 触发 reflow
+            document.body.style.display = "flex";
+          }, 300);
         } catch (err) {
-          // 兼容处理：例如 iOS Safari 不支持直接锁定，则提醒用户
           console.warn("自动锁定失败:", err);
-          alert("请关闭手机系统的「旋转锁定」开关，然后横过手机即可。");
         }
       }
     </script>
