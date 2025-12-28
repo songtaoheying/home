@@ -2,87 +2,229 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <title>极简久坐提醒 - 绝对精准版</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>极简久坐提醒 - 压力可视化版</title>
     <style>
+      :root {
+        --bg-color: #f0f3f7;
+        --card-bg: #ffffff;
+        --text-main: #2d3436;
+        --text-sub: #636e72;
+        --primary: #2ecc71;
+        --danger: #e74c3c;
+        --track-bg: #e9ecef;
+      }
+
       body,
       html {
         margin: 0;
         padding: 0;
         height: 100%;
         width: 100%;
-        background-color: #ffffff;
+        background-color: var(--bg-color);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
+        touch-action: none;
+      }
+
+      .container {
+        width: 85%;
+        max-width: 800px;
+        /* 使用 min-height 确保在小屏幕上不会缩得太小 */
+        height: 75vh;
+        min-height: 350px;
+        max-height: 500px;
+
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
+        align-items: center;
+
+        background: var(--card-bg);
+        padding: 50px 30px; /* 使用固定像素内边距，布局更稳固 */
+        border-radius: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        box-sizing: border-box;
+        transition: all 0.5s ease;
+      }
+
+      .timer-display {
+        /* 使用 clamp 限制字体大小范围，防止在超大或超小屏幕失控 */
+        font-size: clamp(4rem, 18vw, 6rem);
+        font-weight: 800;
+        color: var(--text-main);
+        letter-spacing: -2px;
+        font-variant-numeric: tabular-nums;
+        margin: 0; /* 移除 Margin，由容器分配间距 */
+        line-height: 1;
+      }
+
+      .status-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-sub);
+        margin: 0;
+        min-height: 3rem; /* 固定高度防止文字换行时抖动 */
+        display: flex;
+        align-items: center;
+        transition: color 0.3s ease;
+      }
+
+      .progress-wrapper {
+        width: 100%;
+        position: relative;
+        padding: 20px 0; /* 增加触摸感应区域 */
+        touch-action: none;
+        cursor: pointer;
       }
 
       .progress-container {
         position: relative;
         width: 100%;
-        height: 100px;
-        background-color: #f0f0f0;
-        cursor: crosshair;
+        height: 64px; /* 进度条高度固定更美观 */
+        background-color: var(--track-bg);
+        border-radius: 20px;
+        overflow: visible;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .progress-mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        pointer-events: none;
       }
 
       .progress-fill {
         height: 100%;
         width: 0%;
-        background: #2ecc71;
-        /* 缩短过渡时间，让反馈更即时 */
-        transition: width 0.3s linear;
+        background: var(--primary);
+        transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+          background 0.5s linear;
       }
 
       .marker {
         position: absolute;
-        top: 0;
-        width: 6px;
-        height: 100%;
-        background-color: #333;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        top: 50%;
+        height: 80px; /* 标尺稍微高出进度条 */
+        width: 8px;
+        background-color: var(--text-main);
+        border-radius: 10px;
         z-index: 10;
-        pointer-events: none;
         display: none;
-      }
-
-      .info {
-        position: absolute;
-        width: 100%;
-        text-align: center;
-        top: calc(50% + 70px);
-        color: #666;
-        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+        transform: translate(-50%, -50%);
         pointer-events: none;
-        user-select: none;
       }
 
-      @keyframes danger-shake {
+      .hint {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #b2bec3;
+        letter-spacing: 1px;
+        margin: 0;
+      }
+
+      /* 报警动画优化 */
+      @keyframes alert-pulse {
         0% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-2px);
+          transform: scale(1);
+          background-color: #ffffff;
         }
         100% {
-          transform: translateY(0);
+          transform: scale(1.02);
+          background-color: #fff5f5;
         }
       }
 
-      .danger-mode {
-        animation: danger-shake 0.1s infinite;
-        background-color: #fff5f5;
+      .danger-mode .container {
+        animation: alert-pulse 0.5s infinite alternate ease-in-out;
+        border: 2px solid var(--danger);
+      }
+
+      /* 默认隐藏提示按钮 */
+      #landscape-suggestion {
+        display: none;
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+      }
+
+      /* 仅在手机端 (宽度小于600px) 且处于竖屏时显示 */
+      @media screen and (orientation: portrait) and (max-width: 600px) {
+        #landscape-suggestion {
+          display: block;
+          animation: fadeInUp 0.8s ease-out;
+        }
+      }
+
+      #landscape-suggestion button {
+        background: rgba(45, 52, 54, 0.95);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 28px;
+        border-radius: 100px; /* 圆角胶囊形状 */
+        backdrop-filter: blur(10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #landscape-suggestion small {
+        font-size: 10px;
+        opacity: 0.6;
+        margin-top: 4px;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 30px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
       }
     </style>
   </head>
   <body>
-    <div class="progress-container" id="track">
-      <div class="progress-fill" id="fill"></div>
-      <div class="marker" id="marker"></div>
+    <div id="landscape-suggestion">
+      <button onclick="requestLandscape()">
+        <span style="font-size: 20px">⇄ 旋转</span>
+        <small>横屏视野更舒适</small>
+      </button>
     </div>
+    <div class="container" id="app">
+      <div class="timer-display" id="countdown">00:00</div>
+      <div class="status-text" id="status">滑动时间轴设定提醒</div>
 
-    <div class="info" id="status">点击进度条设置提醒 (全长120分钟)</div>
+      <div class="progress-wrapper" id="touchZone">
+        <div class="progress-container">
+          <div class="marker" id="marker"></div>
+          <div class="progress-mask">
+            <div class="progress-fill" id="fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">全长 120 分钟 • 压力感应变色</div>
+    </div>
 
     <audio id="alarm" loop>
       <source
@@ -92,24 +234,27 @@
     </audio>
 
     <script>
-      const track = document.getElementById("track");
+      const touchZone = document.getElementById("touchZone");
       const fill = document.getElementById("fill");
       const marker = document.getElementById("marker");
       const status = document.getElementById("status");
       const alarm = document.getElementById("alarm");
+      const countdown = document.getElementById("countdown");
 
-      let startTime = 0; // 记录点击开始的绝对时间戳
-      let targetSeconds = 0; // 目标秒数
-      const MAX_MINUTES = 120;
+      let startTime = 0;
+      let targetSeconds = 0;
       let timer = null;
+      let isDragging = false;
+      const MAX_MINUTES = 120;
 
+      // 颜色插值算法
       function getScientificColor(mins) {
-        if (mins <= 45) return "#2ecc71";
+        if (mins <= 45) return "#2ecc71"; // 绿色
         if (mins <= 60)
-          return interpolateColor("#2ecc71", "#f1c40f", (mins - 45) / 15);
+          return interpolateColor("#2ecc71", "#f1c40f", (mins - 45) / 15); // 绿到黄
         if (mins <= 90)
-          return interpolateColor("#f1c40f", "#e67e22", (mins - 60) / 30);
-        return interpolateColor("#e67e22", "#e74c3c", (mins - 90) / 30);
+          return interpolateColor("#f1c40f", "#e67e22", (mins - 60) / 30); // 黄到橙
+        return interpolateColor("#e67e22", "#e74c3c", (mins - 90) / 30); // 橙到红
       }
 
       function interpolateColor(c1, c2, factor) {
@@ -126,84 +271,158 @@
         return `rgb(${r}, ${g}, ${b})`;
       }
 
+      function handlePosition(clientX) {
+        const rect = touchZone
+          .querySelector(".progress-container")
+          .getBoundingClientRect();
+        let percentage = (clientX - rect.left) / rect.width;
+        percentage = Math.max(0, Math.min(1, percentage));
+
+        const mins = Math.round(percentage * MAX_MINUTES);
+        if (mins === 0) return;
+
+        targetSeconds = mins * 60;
+        marker.style.left = `${(mins / MAX_MINUTES) * 100}%`;
+        marker.style.display = "block";
+
+        status.innerText = `将在坐满 ${mins} 分钟时提醒`;
+        status.style.color = getScientificColor(mins); // 设定时文字也变色预览
+
+        if (navigator.vibrate) navigator.vibrate(5);
+      }
+
+      function startTiming() {
+        if (targetSeconds <= 0) return;
+        resetState();
+        startTime = Date.now();
+        if (timer) clearInterval(timer);
+        timer = setInterval(update, 500);
+      }
+
       function update() {
         if (startTime === 0) return;
 
-        // 【关键点】总秒数 = (当前时间 - 开始时间) / 1000
-        const currentTotalSeconds = (Date.now() - startTime) / 1000;
-        const mins = currentTotalSeconds / 60;
-        const currentProgress =
-          (currentTotalSeconds / (MAX_MINUTES * 60)) * 100;
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        const elapsedMins = elapsedSeconds / 60;
 
+        // 更新计时显示 (即使超过目标也会继续走)
+        countdown.innerText = formatTime(elapsedSeconds);
+
+        // 进度条宽度
+        const currentProgress = (elapsedSeconds / (MAX_MINUTES * 60)) * 100;
         fill.style.width = Math.min(currentProgress, 100) + "%";
-        const currentColor = getScientificColor(mins);
+
+        // 可视化压力变色
+        const currentColor = getScientificColor(elapsedMins);
         fill.style.background = currentColor;
 
-        if (mins < 60) {
-          status.innerText = `状态：良好 (${Math.floor(mins)}min)`;
-          status.style.color = "#666";
-        } else if (mins < 90) {
-          status.innerText = `状态：久坐警告 (${Math.floor(mins)}min)`;
-          status.style.color = currentColor;
-        } else {
-          status.innerText = `状态：过度疲劳，请起身活动`;
-          status.style.color = "#e74c3c";
-        }
+        const glowColor = currentColor.includes("rgb")
+          ? currentColor.replace("rgb", "rgba").replace(")", ", 0.5)")
+          : `${currentColor}80`;
 
-        // 到达目标时间
-        if (currentTotalSeconds >= targetSeconds && targetSeconds > 0) {
-          if (alarm.paused) {
-            alarm.play().catch(() => {});
-            document.body.classList.add("danger-mode");
-            status.innerText = "立即起立！点击白色区域复位";
-            status.style.color = "#e74c3c";
+        fill.style.boxShadow = `0 0 20px ${glowColor}`;
+
+        // 到达目标后的逻辑
+        if (elapsedSeconds >= targetSeconds) {
+          // 触发警报，但不再 clearInterval
+          if (!document.body.classList.contains("danger-mode")) {
+            triggerAlarm();
+          }
+          status.innerText = `超时提醒：已超过设定时间 ${formatTime(
+            elapsedSeconds - targetSeconds
+          )}`;
+          status.style.color = "var(--danger)";
+        } else {
+          // 未到达目标时的状态显示
+          if (elapsedMins < 60) {
+            status.innerText = "状态：良好";
+            status.style.color = "var(--text-sub)";
+          } else {
+            status.innerText = "状态：久坐警告";
+            status.style.color = currentColor;
           }
         }
       }
 
-      track.addEventListener("click", (e) => {
-        // 解锁音频
-        alarm.play().then(() => {
-          alarm.pause();
-          alarm.currentTime = 0;
-        });
+      function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m.toString().padStart(2, "0")}:${s
+          .toString()
+          .padStart(2, "0")}`;
+      }
 
-        const width = track.clientWidth;
-        const rect = track.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = clickX / width;
-
-        targetSeconds = Math.floor(percentage * MAX_MINUTES * 60);
-
-        marker.style.left = percentage * 100 + "%";
-        marker.style.display = "block";
-
-        // 重置为当前时间戳
-        resetState();
-        startTime = Date.now();
-
-        if (timer) clearInterval(timer);
-        // 缩短检查间隔至 500ms，让 UI 响应更快，但不影响计时精度
-        timer = setInterval(update, 500);
-
-        status.innerText = `提醒已设定: ${Math.floor(targetSeconds / 60)} 分钟`;
-        status.style.color = "#666";
-      });
-
-      document.body.addEventListener("click", (e) => {
-        if (e.target !== track && !alarm.paused) {
-          resetState();
-          status.innerText = "已停止提醒，重新点击进度条设置";
-          status.style.color = "#666";
-          if (timer) clearInterval(timer);
-        }
-      });
+      function triggerAlarm() {
+        alarm.play().catch(() => {});
+        document.body.classList.add("danger-mode");
+        status.innerText = "到点啦！请立即活动身体";
+        status.style.color = "var(--danger)";
+      }
 
       function resetState() {
-        startTime = 0;
         alarm.pause();
         alarm.currentTime = 0;
         document.body.classList.remove("danger-mode");
+      }
+
+      // 交互逻辑
+      const startEvent = (e) => {
+        isDragging = true;
+        handlePosition(e.touches ? e.touches[0].clientX : e.clientX);
+      };
+      const moveEvent = (e) => {
+        if (!isDragging) return;
+        handlePosition(e.touches ? e.touches[0].clientX : e.clientX);
+      };
+      const endEvent = () => {
+        if (isDragging) {
+          isDragging = false;
+          startTiming();
+        }
+      };
+
+      touchZone.addEventListener("touchstart", startEvent, { passive: false });
+      window.addEventListener("touchmove", moveEvent, { passive: false });
+      window.addEventListener("touchend", endEvent);
+      touchZone.addEventListener("mousedown", startEvent);
+      window.addEventListener("mousemove", moveEvent);
+      window.addEventListener("mouseup", endEvent);
+
+      document.body.addEventListener("click", (e) => {
+        if (
+          !document.getElementById("app").contains(e.target) &&
+          !alarm.paused
+        ) {
+          resetState();
+          clearInterval(timer);
+          startTime = 0;
+          targetSeconds = 0;
+          countdown.innerText = "00:00";
+          fill.style.width = "0%";
+          marker.style.display = "none";
+          status.innerText = "左右滑动设定时间";
+          status.style.color = "var(--text-sub)";
+        }
+      });
+      async function requestLandscape() {
+        try {
+          // 1. 现代浏览器需要先进入全屏模式才能锁定方向
+          const de = document.documentElement;
+          if (de.requestFullscreen) {
+            await de.requestFullscreen();
+          } else if (de.webkitRequestFullscreen) {
+            await de.webkitRequestFullscreen();
+          }
+
+          // 2. 尝试锁定为横屏 (Landscape)
+          if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock("landscape");
+          }
+        } catch (err) {
+          // 兼容处理：例如 iOS Safari 不支持直接锁定，则提醒用户
+          console.warn("自动锁定失败:", err);
+          alert("请关闭手机系统的「旋转锁定」开关，然后横过手机即可。");
+        }
       }
     </script>
   </body>
