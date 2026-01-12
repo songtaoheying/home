@@ -191,6 +191,14 @@ header .subtitle {
   margin-right: 0;
 }
 
+.message-row.bear .bubble::before {
+  right: -11px; 
+  left: auto; 
+  border-left-color: var(
+    --color-wechat-green
+  ); 
+}
+
 .message-row.bear .bubble {
   background-color: var(--color-wechat-green);
   border-top-right-radius: 0;
@@ -211,7 +219,6 @@ header .subtitle {
   border-radius: 10px;
   font-size: 11px;
 }
-
 
 @keyframes message-in {
   from {
